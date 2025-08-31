@@ -17,6 +17,12 @@ app.add_middleware(
 
 # Create a cloudscraper session
 scraper = cloudscraper.create_scraper()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://brainly.in/",
+}
 
 # Thread pool for running blocking calls
 executor = ThreadPoolExecutor(max_workers=10)
@@ -27,7 +33,7 @@ async def fetch_json(url: str):
     """
     loop = asyncio.get_event_loop()
     try:
-        response = await loop.run_in_executor(executor, lambda: scraper.get(url))
+        response = await loop.run_in_executor(executor, lambda: scraper.get(url, headers=headers))
         response.raise_for_status()
         return response.json()
     except Exception as e:
