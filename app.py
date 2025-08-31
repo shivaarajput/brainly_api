@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Request
+from flask import Flask, request, jsonify
 import cloudscraper
 
 BASE_URL = "https://brainly.in"  # The URL you want to scrape/forward requests to
 
-app = FastAPI()
+app = Flask(__name__)
 
 # Create a cloudscraper session
 scraper = cloudscraper.create_scraper(browser={
@@ -19,12 +19,12 @@ headers = {
 }
 
 
-@app.get("/{full_path:path}")
-async def proxy(full_path: str, request: Request):
+@app.route('/<path:full_path>', methods=["GET"])
+def proxy(full_path):
     """
     Forward the request to BASE_URL using cloudscraper
     """
-    query_string = request.url.query
+    query_string = request.query_string.decode("utf-8")
     target_url = f"{BASE_URL.rstrip('/')}/{full_path}"
     if query_string:
         target_url += f"?{query_string}"
@@ -32,6 +32,10 @@ async def proxy(full_path: str, request: Request):
     try:
         response = scraper.get(target_url, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return jsonify(response.json())
     except Exception as e:
-        return {"error": str(e)}
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)
